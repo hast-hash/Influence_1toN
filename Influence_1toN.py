@@ -70,8 +70,14 @@ sim = []
 #1.cutting carriage returns
 #2.cutting blank lines
 def preprocessing(text = text):
-    text = re.sub('\n', ' ', text)
+    #changing a dividing character into a space
+    text = re.sub('\n|—', ' ', text)
+    #erasing note numbers [nnn]
+    text = re.sub('\[[0-9]{1,}\]', ' ', text)
+    #erasing blank lines
     text = re.sub('^..$|^.$', '', text)
+    #erasing unnecessary spaces
+    text = re.sub('  ', ' ', text)
     return text
 
 #loading target texts into variables, dir_data specifies the folder name
@@ -195,15 +201,43 @@ def sim_out(sim = sim, tfidfs = tfidfs, terms = terms, filenames = filenames):
                     terms_num.append(l)
                     terms_list.append(terms[l])
                 l += 1
-            sim_out.append([j, filenames[j-1], i, terms_list])
+            
+            #preparing data for displaying/savaing
+            #num: file number
+            #work: title
+            #len_words: length of texts
+            #val_sim: values of cos\sim
+            #terms: term list (without comma)
+            #file number
+            num = j
+            #title, cutting unnecessary information
+            work = filenames[j-1]
+            work = re.sub('^.*_|.txt', '', work)  
+            #length of texts
+            len_words_tmp = alltexts[num].split(' ')
+            k = 0
+            for m in len_words_tmp:
+                if m == "":
+                    len_words_tmp.pop(k)
+                k += 1
+            len_words = len(len_words_tmp)
+            val_sim = i
+            #term list (without comma)
+            terms_out = ""
+            for m in terms_list:
+                terms_out = terms_out + m + " "
+            
+            #putting variables into a list
+            sim_out.append([num, work, len_words, val_sim, terms_out])
         j += 1
     #[file number, filename, value of cos/sim, a list of shared keywords]
     return sim_out
 
+
+
 #getting the query search result(target texts chich includes source keywords) for display
 sim_out = sim_out(sim, tfidfs, terms, filenames)
+#sim_out2 = sim_out2(sim_out)
 #printout the result on the screen and save it as a file
 print(pd.DataFrame(sim_out))
 list_save(sf+"_result_sim_out"+list_ext, sim_out)
-
-
