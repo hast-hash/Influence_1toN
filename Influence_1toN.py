@@ -124,8 +124,12 @@ def load_source_text(text_source = text_source, exempt_source = exempt_source):
         #preprocessing
         text = preprocessing(text)
         #erasing omit words if any
+        #omitting words that start #
+        text = re.sub('\#.*? ', ' ', text)
+        text = re.sub(' \#.*?$', '', text)        
         if len(exempt_source):
             for i in exempt_source:
+                i = preprocessing(i)
                 text = re.sub(' '+i+' ', ' ', text)
     return [text]
 
