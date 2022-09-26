@@ -33,7 +33,7 @@ target_texts_folder_name = 'Target_texts'
 #the header name for saving output files/a file
 outfile_header = 'cos_sim'
 #omitting words from the source text
-exempt_source = ['mani']
+exempt_source = []
 #example:
 #exempt_source = ['al', 'Nights', 'Tales', 'Grand', 'Sign', 'Isle', 'of', 'La', 'Empire', \
 #                  'illa', 'Al', 'prince', 'Prince']
