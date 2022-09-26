@@ -22,6 +22,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import nltk 
+from nltk.stem import SnowballStemmer
 
 #Specify the following variables before you implement this program
 #the filename of the source text
@@ -31,7 +33,7 @@ target_texts_folder_name = 'Target_texts'
 #the header name for saving output files/a file
 outfile_header = 'cos_sim'
 #omitting words from the source text
-exempt_source = []
+exempt_source = ['mani']
 #example:
 #exempt_source = ['al', 'Nights', 'Tales', 'Grand', 'Sign', 'Isle', 'of', 'La', 'Empire', \
 #                  'illa', 'Al', 'prince', 'Prince']
@@ -69,6 +71,8 @@ sim = []
 #preprocessing
 #1.cutting carriage returns
 #2.cutting blank lines
+
+
 def preprocessing(text = text):
     #changing a dividing character into a space
     text = re.sub('\n|—', ' ', text)
@@ -78,6 +82,14 @@ def preprocessing(text = text):
     text = re.sub('^..$|^.$', '', text)
     #erasing unnecessary spaces
     text = re.sub('  ', ' ', text)
+    
+    #lowering all the text
+    text = text.lower()
+    #stemming
+    text = re.findall(r'\w+|\S\w*', text)
+    stemmer = SnowballStemmer("english")
+    text = " ".join([stemmer.stem(word) for word in text])
+
     return text
 
 #loading target texts into variables, dir_data specifies the folder name
@@ -143,6 +155,7 @@ alltexts.extend(textb)
 
 #implementing tfidf and cosine similarity
 tfidfs, terms = get_tfidf(alltexts)
+
 #calculating cos/sim using cosine_similarity (sklearn)
 #        target1           target2       target3 ...
 #target1 value of cos/sim
@@ -170,7 +183,7 @@ def list_save(filename, list, columns=nostr, index=nostr):
 list_ext = ".csv"
 sf = file_directory+slash_char+outfile_header
 #examples of saving variables
-#list_save(sf_header+"_result_sim"+list_ext, sim)
+#list_save(sf+"_result_sim"+list_ext, sim)
 #list_save(sf+"_result_tfidfs"+list_ext, tfidfs)
 #list_save(sf+"_result_terms"+list_ext, terms)
 #list_save(sf+"_result_text2"+list_ext, text2)
@@ -241,3 +254,18 @@ sim_out = sim_out(sim, tfidfs, terms, filenames)
 #printout the result on the screen and save it as a file
 print(pd.DataFrame(sim_out))
 list_save(sf+"_result_sim_out"+list_ext, sim_out)
+
+#Other ways of calculating cosine similarity
+
+#vectorizer2 = TfidfVectorizer(lowercase=True, norm='l2', smooth_idf=False, stop_words='english')
+#vecs2 = vectorizer2.fit_transform(textb)
+#tfidfs2 = vecs2.toarray()
+#terms2 = vectorizer2.get_feature_names()
+#source_tfidf = vectorizer2.transform(texta)
+#sim2 = cosine_similarity(source_tfidf, vecs2)[0]
+
+#from sklearn.metrics.pairwise import linear_kernel
+#vectorizer3 = TfidfVectorizer(lowercase=True, norm='l2', smooth_idf=False, stop_words='english')
+#vecs3 = vectorizer3.fit_transform(alltexts)
+#sim3 = linear_kernel(vecs3[0:1], vecs3).flatten()
+
