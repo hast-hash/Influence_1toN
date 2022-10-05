@@ -35,8 +35,7 @@ outfile_header = 'cos_sim'
 #omitting words from the source text
 exempt_source = []
 #example:
-#exempt_source = ['al', 'Nights', 'Tales', 'Grand', 'Sign', 'Isle', 'of', 'La', 'Empire', \
-#                  'illa', 'Al', 'prince', 'Prince']
+#exempt_source = ['al']
 #letters that divide folders in your environment. '\\' or '/'
 slash_char = '\\'
 #encoding type for all the texts
@@ -74,7 +73,6 @@ sim = []
 
 
 def preprocessing(text = text):
-
     #changing a dividing character into a space
     text = re.sub('\n|—', ' ', text)
     #erasing note numbers [nnn]
@@ -87,7 +85,7 @@ def preprocessing(text = text):
     #lowering all the text
     text = text.lower()
     #stemming
-    text = re.findall(r'[\w\S]+|\w+|\S\w*', text)
+    text = re.findall(r'\"\[.+\]\"+|\'\[.+\]\'+|[\w\S]+|\w+|\S\w*', text)
     stemmer = SnowballStemmer("english")
     text = " ".join([stemmer.stem(word) for word in text])
 
@@ -124,18 +122,24 @@ def load_source_text(text_source = text_source, exempt_source = exempt_source):
         text = f.read()
         #preprocessing
         text0 = text
-        text = preprocessing(text)
+        j = ""
+        for i in text0.split("\n"):
+            j = j + "\""+i+"\""+"\n"
+        text = preprocessing(j)
+#        text = preprocessing(text)
         #erasing omit words if any
         #omitting words that start #
         text = re.sub('\#.*? ', '', text)
         text = re.sub(' \#.*?$', '', text)        
         if len(exempt_source):
             for i in exempt_source:
-                i = preprocessing(i)
-                text = re.sub(' '+i+' ', ' ', text)
+#                i = preprocessing(i)
+                j = '^\"'+i+' |[ \"]'+i+'[ \""]| '+i+'\"'
+                text = re.sub(j, ' ', text)
         #dictionary for original words
         sdic = {}
         for i in text0.split("\n"):
+#            i = "\""+i+"\""
             j = preprocessing(i)
             if sdic.get(j) is None:
                 k = [i]
@@ -228,8 +232,11 @@ def sim_out(sim = sim, tfidfs = tfidfs, terms = terms, filenames = filenames):
                 #when the codes finds a shared word, terms_list includes the keyword itself.
                 if k != 0:
                     terms_num.append(l)
-                    for m in sdic[terms[l]]:
-                        terms_list.append(m)
+                    if sdic.get(terms[l]) is None:
+                        terms_list.append(terms[l])
+                    else:
+                        for m in sdic[terms[l]]:
+                            terms_list.append(m)
                 l += 1
             
             #preparing data for displaying/savaing
@@ -271,4 +278,18 @@ sim_out = sim_out(sim, tfidfs, terms, filenames)
 #printout the result on the screen and save it as a file
 print(pd.DataFrame(sim_out))
 list_save(sf+"_result_sim_out"+list_ext, sim_out)
+
+#Other ways of calculating cosine similarity
+
+#vectorizer2 = TfidfVectorizer(lowercase=True, norm='l2', smooth_idf=False, stop_words='english')
+#vecs2 = vectorizer2.fit_transform(textb)
+#tfidfs2 = vecs2.toarray()
+#terms2 = vectorizer2.get_feature_names()
+#source_tfidf = vectorizer2.transform(texta)
+#sim2 = cosine_similarity(source_tfidf, vecs2)[0]
+
+#from sklearn.metrics.pairwise import linear_kernel
+#vectorizer3 = TfidfVectorizer(lowercase=True, norm='l2', smooth_idf=False, stop_words='english')
+#vecs3 = vectorizer3.fit_transform(alltexts)
+#sim3 = linear_kernel(vecs3[0:1], vecs3).flatten()
 
