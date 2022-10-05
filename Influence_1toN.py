@@ -74,6 +74,7 @@ sim = []
 
 
 def preprocessing(text = text):
+
     #changing a dividing character into a space
     text = re.sub('\n|—', ' ', text)
     #erasing note numbers [nnn]
@@ -82,11 +83,11 @@ def preprocessing(text = text):
     text = re.sub('^..$|^.$', '', text)
     #erasing unnecessary spaces
     text = re.sub('  ', ' ', text)
-    
+
     #lowering all the text
     text = text.lower()
     #stemming
-    text = re.findall(r'\w+|\S\w*', text)
+    text = re.findall(r'[\w\S]+|\w+|\S\w*', text)
     stemmer = SnowballStemmer("english")
     text = " ".join([stemmer.stem(word) for word in text])
 
@@ -122,16 +123,27 @@ def load_source_text(text_source = text_source, exempt_source = exempt_source):
     with open(text_source, "r", encoding=targetdataencoding) as f:
         text = f.read()
         #preprocessing
+        text0 = text
         text = preprocessing(text)
         #erasing omit words if any
         #omitting words that start #
-        text = re.sub('\#.*? ', ' ', text)
+        text = re.sub('\#.*? ', '', text)
         text = re.sub(' \#.*?$', '', text)        
         if len(exempt_source):
             for i in exempt_source:
                 i = preprocessing(i)
                 text = re.sub(' '+i+' ', ' ', text)
-    return [text]
+        #dictionary for original words
+        sdic = {}
+        for i in text0.split("\n"):
+            j = preprocessing(i)
+            if sdic.get(j) is None:
+                k = [i]
+            else:
+                k = sdic[j]
+                k.append(i)
+            sdic[j] = k
+    return [text], sdic
 
 #calculating tfidf using TfidfVectorizer (sklearn)
 #alltexts includes a source text and target texts
@@ -153,7 +165,7 @@ def get_tfidf(alltexts = alltexts):
 
 #loading target texts and the source text. Putting them into alltexts
 text2, filenames, textb = load_target_texts(dir_data)
-texta = load_source_text(text_source)
+texta, sdic = load_source_text(text_source)
 alltexts = texta
 alltexts.extend(textb)
 
@@ -216,7 +228,8 @@ def sim_out(sim = sim, tfidfs = tfidfs, terms = terms, filenames = filenames):
                 #when the codes finds a shared word, terms_list includes the keyword itself.
                 if k != 0:
                     terms_num.append(l)
-                    terms_list.append(terms[l])
+                    for m in sdic[terms[l]]:
+                        terms_list.append(m)
                 l += 1
             
             #preparing data for displaying/savaing
@@ -258,18 +271,4 @@ sim_out = sim_out(sim, tfidfs, terms, filenames)
 #printout the result on the screen and save it as a file
 print(pd.DataFrame(sim_out))
 list_save(sf+"_result_sim_out"+list_ext, sim_out)
-
-#Other ways of calculating cosine similarity
-
-#vectorizer2 = TfidfVectorizer(lowercase=True, norm='l2', smooth_idf=False, stop_words='english')
-#vecs2 = vectorizer2.fit_transform(textb)
-#tfidfs2 = vecs2.toarray()
-#terms2 = vectorizer2.get_feature_names()
-#source_tfidf = vectorizer2.transform(texta)
-#sim2 = cosine_similarity(source_tfidf, vecs2)[0]
-
-#from sklearn.metrics.pairwise import linear_kernel
-#vectorizer3 = TfidfVectorizer(lowercase=True, norm='l2', smooth_idf=False, stop_words='english')
-#vecs3 = vectorizer3.fit_transform(alltexts)
-#sim3 = linear_kernel(vecs3[0:1], vecs3).flatten()
 
