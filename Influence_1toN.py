@@ -124,7 +124,11 @@ def load_source_text(text_source = text_source, exempt_source = exempt_source):
         text0 = text
         j = ""
         for i in text0.split("\n"):
-            j = j + "\""+i+"\""+"\n"
+#            j = j + "\""+i+"\""+"\n"
+            #for snowball issue
+            if len(i) != 0 and i[-1] == "e":
+                i = "\"" + i + "\""
+            j = j + i + "\n"
         text = preprocessing(j)
 #        text = preprocessing(text)
         #erasing omit words if any
